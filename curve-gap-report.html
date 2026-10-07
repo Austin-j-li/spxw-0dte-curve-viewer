@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Curve Gap Test Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column (about 70ch) for prose; figures and tables may use the wider frame. A research note, not a dashboard. */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink2: #464c56; --muted: #757c87;
+  --grid: #e4e7eb; --axis: #c3c8cf; --rule: #d9dde2;
+  --line: #2a78d6; --svi: #eb6834; --ref: #a3a9b2; --spx: #464c56; --accent: #1f4f8f; --wash: #eef2f8;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111317; --surface: #181b20; --ink: #eef0f3; --ink2: #c1c6cd; --muted: #8b929c;
+  --grid: #272b31; --axis: #3a3f47; --rule: #2c3036;
+  --line: #3987e5; --svi: #d95926; --ref: #646b75; --spx: #c1c6cd; --accent: #8fb5ec; --wash: #1c2330; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #181b20; --ink: #eef0f3; --ink2: #c1c6cd; --muted: #8b929c;
+  --grid: #272b31; --axis: #3a3f47; --rule: #2c3036;
+  --line: #3987e5; --svi: #d95926; --ref: #646b75; --spx: #c1c6cd; --accent: #8fb5ec; --wash: #1c2330; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6; }
+.page { max-width: 880px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; }
+.prose { max-width: 68ch; }
+header { display: grid; gap: 6px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 28px; }
+.eyebrow { font-family: var(--f-data); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(32px, 6vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.byline { color: var(--ink2); font-size: 14px; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 24px; line-height: 1.2; margin: 44px 0 10px; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 500; font-size: 19px; margin: 28px 0 6px; text-wrap: balance; }
+h2 .num, h3 .num { font-family: var(--f-data); font-weight: 400; color: var(--muted); font-size: .7em; margin-right: 10px; vertical-align: .12em; }
+p { margin: 0 0 12px; }
+.summary { background: var(--wash); border-left: 3px solid var(--accent); padding: 16px 20px; display: grid; gap: 8px; }
+.summary p { margin: 0; }
+.summary strong { font-weight: 600; }
+dl.design { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 10px 0 0; }
+dl.design dt { font-weight: 600; font-size: 14px; color: var(--ink2); padding-top: 2px; }
+dl.design dd { margin: 0; min-width: 0; }
+@media (max-width: 560px) { dl.design { grid-template-columns: 1fr; } dl.design dd { margin-bottom: 8px; } }
+.num-data, td.n, th.n { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; margin: 12px 0 6px; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-weight: 600; color: var(--ink2); font-size: 13px; }
+td.n, th.n { text-align: right; }
+tr.em td { font-weight: 600; }
+.key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.key.box { height: 10px; width: 10px; border-radius: 2px; }
+figure { margin: 18px 0 8px; }
+figcaption { font-size: 13px; color: var(--ink2); margin-top: 6px; max-width: 68ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink2); margin-bottom: 6px; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--muted); font-family: var(--f-data); font-size: 11px; }
+.chart .title { fill: var(--ink); font-family: var(--f-body); font-size: 13px; font-weight: 600; }
+.chart .lab { fill: var(--ink2); font-family: var(--f-body); font-size: 12px; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; font-size: 12px; line-height: 1.45; box-shadow: 0 4px 14px rgba(0,0,0,.12); min-width: 150px; z-index: 2; }
+.tip .v { font-family: var(--f-data); font-weight: 500; color: var(--ink); }
+.tip .s { color: var(--muted); }
+.tip .row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+@media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+.diagram svg { width: 100%; max-width: 620px; height: auto; display: block; }
+.diagram text { font-family: var(--f-body); font-size: 13px; fill: var(--ink2); }
+ul.tight { margin: 4px 0 12px; padding-left: 20px; }
+ul.tight li { margin-bottom: 4px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+.hit:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (prefers-reduced-motion: no-preference) { .chart path.series { transition: opacity .2s; } }
+</style>
+</head><body style="margin:0">
+
+<div class="page">
+<header>
+  <div class="eyebrow">SPXW same-day options · 2 January to 30 September 2026</div>
+  <h1>Curve gap test</h1>
+  <div class="byline">Results, the reasons for the losses, and a straddle on the same rules · 7 October 2026</div>
+</header>
+
+<section class="prose summary" aria-label="Summary">
+  <p><strong>Neither curve made money with the gap rule, and neither curve did better than the other.</strong> The straight line lost 145 points a day and SVI lost 50 points a day in the main (extending) view. In the rolling one-week view, both were near zero.</p>
+  <p>The totals follow the index, not the curves. The index rose 11% in the period, so calls earned money and puts lost money with or without a signal.</p>
+  <p>A comparison inside each minute removes the index move. There, the options that each curve called cheap did as well as their neighbours, within a fraction of the bid-ask spread.</p>
+  <p>A straddle on the same rules shows the usual option premium. At 11 of 12 fixed times, it paid back 88 to 98 cents per dollar of mid price. Bought, it lost money; sold, it earned a little. No straddle result is clear of noise.</p>
+</section>
+
+<h2><span class="num">1</span>The test</h2>
+<div class="prose">
+<p>The question: with a fixed set of simple long strategies, which fair-value curve gives the better profit?</p>
+<dl class="design">
+  <dt>Rule</dt><dd>Each minute (at hh:mm:55), buy one contract of every out-of-the-money option in the chosen group whose curve price is above its ask by more than <i>y</i> points. Fill at the ask 5 seconds later. Hold to the official close.</dd>
+  <dt>Curves</dt><dd><b>Straight line</b>: the line in strike between the mid implied volatilities of the nearest quoted neighbours below and above the strike (the strike itself is left out). <b>SVI</b>: the raw SVI fit of the same minute.</dd>
+  <dt>Settings</dt><dd>Group = put or call × near (|z| ≤ 0.5), mid (≤ 1.25) or far (≤ 2.5). Threshold <i>y</i> = 0, 0.05, 0.10, 0.20, 0.50 points. 30 settings and “no trade” for each curve.</dd>
+  <dt>Costs</dt><dd>The ask 5 seconds after the signal, plus a fee of 0.0119 to 0.0128 points per contract.</dd>
+  <dt>Walk-forward</dt><dd>Each week, take the setting with the best total in the fit window, and trade it in the next week. <b>Extending</b>: every day from 2 January to the end of the previous week. <b>Rolling</b>: the previous week only. 38 test weeks, 12 January to 30 September.</dd>
+  <dt>Days</dt><dd>135 days with built curves in 2026. 131 of them are test days.</dd>
+</dl>
+</div>
+
+<h2><span class="num">2</span>Results</h2>
+<div class="tablewrap">
+<table aria-label="Walk-forward results">
+  <thead><tr><th>Series</th><th class="n">Mean a day (pts)</th><th class="n">Day t</th><th class="n">Total (pts)</th><th class="n">Contracts</th><th class="n">Weekly choice changes</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key" style="background:var(--line)"></span>Straight line, extending</td><td class="n">−145.4</td><td class="n">−1.82</td><td class="n">−19,043</td><td class="n">34,144</td><td class="n">5 of 37</td></tr>
+    <tr><td><span class="key" style="background:var(--svi)"></span>SVI, extending</td><td class="n">−49.6</td><td class="n">−0.35</td><td class="n">−6,496</td><td class="n">16,166</td><td class="n">7 of 37</td></tr>
+    <tr><td><span class="key" style="background:var(--line)"></span>Straight line, rolling</td><td class="n">+15.9</td><td class="n">0.11</td><td class="n">+2,079</td><td class="n">19,604</td><td class="n">31 of 37</td></tr>
+    <tr><td><span class="key" style="background:var(--svi)"></span>SVI, rolling</td><td class="n">+10.4</td><td class="n">0.10</td><td class="n">+1,363</td><td class="n">9,019</td><td class="n">32 of 37</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="prose" style="font-size:14px;color:var(--ink2)">Day t = mean a day ÷ (sd a day ÷ √131). The day-by-day difference SVI minus line has t 0.68 (extending) and −0.03 (rolling). One point = $100 per contract.</p>
+
+<figure>
+  <div class="legend" aria-hidden="true"><span><span class="key" style="background:var(--line)"></span>Straight line</span><span><span class="key" style="background:var(--svi)"></span>SVI</span><span><span class="key" style="background:var(--spx)"></span>SPX close</span></div>
+  <div class="chart" id="cum" role="img" aria-label="Cumulative profit of the four series and the SPX close over the 131 test days"></div>
+  <figcaption>Cumulative profit (points) of each series on the 131 test days, and the SPX official close. Large steps fall on large index days: 9 March (+1.6%), 13 April (+1.3%), 11 June (+1.4%) and 29 July (−1.4%).</figcaption>
+</figure>
+
+<h2><span class="num">3</span>Why the runs lost</h2>
+
+<h3><span class="num">3.1</span>The index direction sets the totals</h3>
+<div class="prose">
+<p>The index rose 11%, from 6,887 at the first open to 7,652 at the last close. Bought with no signal at every minute, calls earned +0.67 (near), +0.63 (mid) and +0.01 (far) points a contract. Puts lost 1.40, 1.71 and 1.04.</p>
+<p>From March (SVI) and April (straight line), the extending window chose mid calls and kept them. On those call days, the day profit moved with the index: the correlation with the day move is 0.46 for the line and 0.42 for SVI. The day profit varied by 900 to 1,650 points (sd a day).</p>
+</div>
+
+<h3><span class="num">3.2</span>The signal does not pick cheaper options</h3>
+<div class="prose">
+<p>Against the all-day reference, the line looks good on puts (+0.3 to +1.4 points a contract). That comparison mixes times of day and price levels. The same-minute comparison puts each bought option next to all options of its group bought in the same minute, so the index move and the clock are the same for both.</p>
+<p>In that comparison, the line’s edge is −0.015 to +0.027 points a contract (all |t| below 1.6). The half-spread is 0.03 to 0.07 points. SVI goes from −0.29 (far puts, t −3.7) to +0.26 (near calls, t 1.6).</p>
+</div>
+<figure>
+  <div class="legend" aria-hidden="true"><span><span class="key box" style="background:var(--ref)"></span>Against the all-day reference</span><span><span class="key box" style="background:var(--line)"></span>Line, same minute</span><span><span class="key box" style="background:var(--svi)"></span>SVI, same minute</span></div>
+  <div class="two">
+    <div class="chart" id="edgeL" role="img" aria-label="Straight line: profit per contract against the reference and against same-minute neighbours"></div>
+    <div class="chart" id="edgeS" role="img" aria-label="SVI: profit per contract against the reference and against same-minute neighbours"></div>
+  </div>
+  <figcaption>Profit per contract of the signal buys at y = 0, minus a comparison group (points). Grey: minus the all-day reference of the same side and band. Colour: minus the mean of all options of the same group in the same minute.</figcaption>
+</figure>
+<p class="prose">The gap against the reference comes from timing. Line signals come late in the day (30% to 46% after 14:00, against 15% to 17% of all options) and on cheaper options (near puts: mean ask 5.2 against 9.7). A cheaper option loses fewer points per contract.</p>
+
+<h3><span class="num">3.3</span>The straight line reads the bend of the smile</h3>
+<div class="prose">
+<p>The smile is convex in strike. A straight line between two neighbour strikes therefore sits above the smile at the strike between them. The line implied volatility is above the option’s own mid implied volatility on 61% to 81% of option-minutes. So a positive line gap mostly measures the bend of the smile, not a cheap quote.</p>
+</div>
+<figure class="diagram">
+  <svg viewBox="0 0 620 250" role="img" aria-label="A convex smile, a straight line between two neighbour strikes, and the line value above the smile at the middle strike">
+    <line x1="40" y1="215" x2="600" y2="215" stroke="var(--axis)" stroke-width="1"/>
+    <line x1="40" y1="20" x2="40" y2="215" stroke="var(--axis)" stroke-width="1"/>
+    <text x="600" y="238" text-anchor="end">strike</text>
+    <text x="48" y="30">implied volatility</text>
+    <path d="M60,40 C190,175 330,205 590,150" fill="none" stroke="var(--ink2)" stroke-width="2"/>
+    <text x="585" y="140" text-anchor="end">smile (quotes)</text>
+    <circle cx="200" cy="140" r="5" fill="var(--line)" stroke="var(--surface)" stroke-width="2"/>
+    <circle cx="420" cy="181" r="5" fill="var(--line)" stroke="var(--surface)" stroke-width="2"/>
+    <line x1="200" y1="140" x2="420" y2="181" stroke="var(--line)" stroke-width="2"/>
+    <circle cx="310" cy="185.5" r="5" fill="var(--ink2)" stroke="var(--surface)" stroke-width="2"/>
+    <circle cx="310" cy="160.5" r="5" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/>
+    <line x1="310" y1="166" x2="310" y2="180" stroke="var(--muted)" stroke-width="1"/>
+    <text x="320" y="152">line value at K</text>
+    <text x="320" y="205">quote at K</text>
+    <text x="196" y="125" text-anchor="middle">K − 5</text>
+    <text x="424" y="168" text-anchor="middle">K + 5</text>
+  </svg>
+  <figcaption>Schematic. The line value at strike K (open circle) sits above the quote at K (filled circle) because the smile bends. When the gap is larger than half the spread, the rule buys.</figcaption>
+</figure>
+
+<h3><span class="num">3.4</span>Large SVI gaps mark weak fits</h3>
+<div class="prose">
+<p>Weak SVI fits are 25% of the SVI option-minutes, but they give a gap above 0.05 points about 14 times as often as good fits. 79% of the SVI walk-forward contracts came from weak fits. A larger SVI gap lost more per contract.</p>
+</div>
+<div class="tablewrap">
+<table aria-label="Profit per contract by threshold">
+  <thead><tr><th>Threshold y</th><th class="n">Line contracts</th><th class="n">Line pts / contract</th><th class="n">SVI contracts</th><th class="n">SVI pts / contract</th><th class="n">SVI weak-fit share</th></tr></thead>
+  <tbody id="byy"></tbody>
+</table>
+</div>
+<p class="prose" style="font-size:14px;color:var(--ink2)">All 30 settings pooled for each y, over all 135 days without selection. The line cells at y ≥ 0.20 hold 39 and 11 contracts on a few days.</p>
+<p class="prose">On 29 July (index −1.4%), 98% of the SVI buys came from weak fits. That one day holds 81% of the far-put buys at y &gt; 0.05. The best SVI setting (mid calls, y &gt; 0, +25,174 points) rests on one day: 9 March gave +31,284.</p>
+
+<h2><span class="num">4</span>A straddle on the same rules</h2>
+<div class="prose">
+<p>The second test keeps the days, the fills 5 seconds after the snapshot, the fees and the weekly windows. It replaces the curve signal with an at-the-money straddle: one call and one put at the listed strike nearest the forward.</p>
+<dl class="design">
+  <dt>Settings</dt><dd>One straddle a day at a fixed time (10:00 to 15:30, every 30 minutes), or one at each of the 12 times. 13 settings and “no trade”.</dd>
+  <dt>Menus</dt><dd><b>Buy</b> both legs at the ask (the long rule of the first test). <b>Sell</b> both legs at the bid (the mirror). Each menu has its own walk-forward.</dd>
+  <dt>Payout</dt><dd>|close − strike| at the official close. All 1,620 entries (135 days × 12 times) filled.</dd>
+</dl>
+</div>
+<div class="tablewrap">
+<table aria-label="Straddle walk-forward results">
+  <thead><tr><th>Series</th><th class="n">Mean a day (pts)</th><th class="n">Day t</th><th class="n">Total (pts)</th><th class="n">Straddles</th><th class="n">Worst day (pts)</th></tr></thead>
+  <tbody>
+    <tr><td>Buy, extending</td><td class="n">−3.0</td><td class="n">−0.96</td><td class="n">−390</td><td class="n">197</td><td class="n">−220 (28 Jan)</td></tr>
+    <tr><td>Buy, rolling</td><td class="n">−11.2</td><td class="n">−2.43</td><td class="n">−1,467</td><td class="n">419</td><td class="n">−220 (28 Jan)</td></tr>
+    <tr><td>Sell, extending</td><td class="n">+7.9</td><td class="n">0.66</td><td class="n">+1,029</td><td class="n">1,440</td><td class="n">−727 (9 Mar)</td></tr>
+    <tr><td>Sell, rolling</td><td class="n">+4.5</td><td class="n">0.47</td><td class="n">+591</td><td class="n">920</td><td class="n">−727 (9 Mar)</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="prose" style="font-size:14px;color:var(--ink2)">Points per straddle (one call and one put; one point = $100). 131 test days, 38 test weeks.</p>
+<figure>
+  <div class="chart" id="payback" role="img" aria-label="Straddle payback per dollar of mid price, minus one dollar, by entry time"></div>
+  <figcaption>Payout minus mid price, in cents per dollar of mid price, by entry time (all 135 days). Below zero, the buyer gets back less than the mid price. A buyer also pays half the spread on each leg; a seller gives it up.</figcaption>
+</figure>
+<div class="prose">
+<p>The straddle paid back 88 to 98 cents per dollar of mid price at 11 of the 12 times; 15:00 paid back 104 cents. So the buy menu lost money. The rolling window lost the most (−11.2 points a day, t −2.4), because it moved each week to the time that did best in the previous week.</p>
+<p>The sell menu earned a little: +7.9 points a day (extending) and +4.5 (rolling), both with t below 1. A sale at all 12 times made +0.83 points per straddle, but one day (9 March, index +1.6%) took 727 points. Earlier work on June 2022 to December 2023 found the same sign: the straddle paid back 88% to 97% of its price after 10:30.</p>
+</div>
+
+<h2><span class="num">5</span>Conclusion</h2>
+<div class="prose">
+<p>Long options held to the close measure the path of the index more than the quality of a curve. On these 135 days, neither curve found options that were cheap by more than a fraction of the spread. The same-minute comparison is the direct test of which curve prices better, and there the two curves are equal within noise.</p>
+<p>The straddle shows the same market from the other side. Option buyers pay a small premium on average, and 131 days are too few to show the seller’s gain clearly.</p>
+<p>A cleaner next test of the curves would ask whether the price of a “cheap” option moves toward the curve in the next few minutes. That answer does not depend on where the index closes.</p>
+</div>
+
+<h2><span class="num">6</span>Limits</h2>
+<ul class="prose tight">
+  <li>All 135 days were used in earlier work. This test describes the data; it does not confirm a result.</li>
+  <li>No result is adjusted for multiple tests: 60 curve cells, 26 straddle cells and 8 walk-forward series.</li>
+  <li>Straddles at fixed times in 2026 were looked at in earlier work, before this test.</li>
+  <li>Nothing caps the loss of a straddle sale on a large-move day.</li>
+  <li>From January to June, the data holds about 3 days a week (sealed SVI reserve days are left out).</li>
+  <li>Sections 3.2 to 3.4 were measured after the curve run, on the same trades.</li>
+</ul>
+
+<footer>
+  Data: release v1 of the SPXW same-day curve file (one curve set a minute at hh:mm:55) and the raw 5-second quotes; settlement at the FRED SP500 official close. Curve prices use Black-76 with the parity forward, discount factor and time of each minute. One block of 11 frozen minutes (25 August, 09:30:55 to 09:40:55) is left out. A second reviewer read the code against the written specification, and an independent recompute of the four walk-forward totals matched.
+</footer>
+</div>
+
+<script>
+const D = {"dates":["2026-01-12","2026-01-14","2026-01-15","2026-01-20","2026-01-21","2026-01-23","2026-01-27","2026-01-28","2026-01-30","2026-02-02","2026-02-04","2026-02-06","2026-02-09","2026-02-11","2026-02-12","2026-02-17","2026-02-19","2026-02-20","2026-02-24","2026-02-25","2026-02-27","2026-03-03","2026-03-04","2026-03-06","2026-03-09","2026-03-11","2026-03-13","2026-03-16","2026-03-18","2026-03-19","2026-03-23","2026-03-25","2026-03-26","2026-03-30","2026-03-31","2026-04-02","2026-04-07","2026-04-08","2026-04-10","2026-04-13","2026-04-15","2026-04-17","2026-04-20","2026-04-22","2026-04-23","2026-04-27","2026-04-29","2026-04-30","2026-05-04","2026-05-05","2026-05-07","2026-05-11","2026-05-12","2026-05-14","2026-05-15","2026-05-19","2026-05-21","2026-05-22","2026-05-27","2026-05-28","2026-06-01","2026-06-03","2026-06-04","2026-06-08","2026-06-09","2026-06-11","2026-06-15","2026-06-16","2026-06-18","2026-06-22","2026-06-24","2026-06-26","2026-06-29","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-08","2026-09-10","2026-09-11","2026-09-14","2026-09-16","2026-09-17","2026-09-22","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30"],"cum":{"L-G":[-532.1,-859.5,113.1,851.6,635.6,248.9,-168.1,-634.4,-929.4,-1105.4,-1285.5,-1852.5,-1774.1,-1727.9,-1208.4,-1348.0,-1456.2,-1645.5,-2016.8,-2602.1,-2744.3,-2747.3,-2739.2,-2739.2,-2754.3,-2754.3,-2755.6,-2903.1,-3052.7,-3199.0,-3386.6,-3525.1,-3719.8,-3983.3,-2799.8,-2882.0,-2394.5,-2713.1,-2940.9,956.1,930.5,536.9,-191.3,130.0,-518.7,-1404.8,-2001.0,638.6,-302.1,-1259.4,-2072.2,-3071.2,1848.9,1313.3,724.1,108.4,318.8,-400.7,-1169.8,-1332.2,-1858.5,-2591.0,-2994.5,-3626.8,-2536.4,-1316.4,-2205.0,-3049.4,-3744.1,-4471.5,-4882.2,-5431.7,-4904.2,-5694.4,-4366.8,-5131.1,-5789.2,-5940.9,-6246.2,-6456.7,-7171.5,-7841.2,-7270.2,-7738.5,-8344.4,-9149.3,-9939.5,-10777.7,-11210.4,-11861.9,-12320.1,-12964.2,-13559.0,-13395.8,-13180.2,-9967.5,-6424.6,-7185.8,-8104.5,-8086.8,-8967.8,-9966.6,-10747.2,-11485.3,-12316.1,-13189.2,-14076.6,-14911.2,-15684.5,-16571.8,-17471.7,-17964.2,-18658.6,-19189.6,-19988.5,-19992.4,-20000.7,-20022.7,-20055.9,-19779.4,-19785.6,-19513.4,-19256.0,-19239.5,-19295.1,-19217.0,-19215.3,-19271.2,-19273.8,-19280.8,-19043.5],"L-O":[-532.1,-859.5,113.1,851.6,635.6,248.9,143.5,34.7,-71.8,151.9,165.0,110.4,-622.2,-1065.3,-1395.6,-1590.0,-1749.3,-1904.7,-1904.7,-1928.5,-1928.5,-1928.5,-1928.5,-1928.5,-1928.5,-1928.5,-1928.5,-2735.3,-3203.1,-3088.1,-2643.0,-2771.1,-1887.1,-1953.0,-2406.9,-2810.4,-425.6,-1416.8,-2588.2,15036.1,17758.7,16549.3,15821.0,16142.4,15493.7,15222.6,14816.2,16333.4,15392.8,14435.5,13622.6,13600.0,13041.7,12548.2,13580.0,12964.4,13174.7,12455.2,12091.8,11257.1,11257.1,11257.1,11257.1,11781.1,11762.5,11561.9,10673.4,9828.9,9134.2,9138.8,9262.0,9184.5,8369.1,9824.6,9664.9,8900.5,8242.4,8090.7,7785.4,7575.0,7575.0,7575.0,7575.0,7575.0,7575.0,8586.3,8013.2,8659.1,8447.5,8902.2,8564.5,8609.9,8984.8,8444.7,8211.3,8202.1,8205.0,8226.1,8226.1,8220.8,7339.8,6341.1,5560.4,4822.3,3991.6,3991.6,3991.6,3991.6,3991.6,3991.6,3869.6,3005.1,2796.1,2278.3,2715.9,2706.7,2692.2,2614.3,2524.4,2524.4,2524.4,2530.2,3528.8,4299.9,3504.8,2896.2,2352.0,1851.5,1849.0,1841.9,2079.3],"S-G":[0.0,-51.0,-51.0,-357.1,-357.1,-357.1,-390.6,-696.4,-843.5,-911.4,-993.5,-1442.5,-1442.5,-1442.5,-1442.5,-1525.9,-2556.9,-3430.6,-3552.4,-3629.0,-4620.6,-6288.2,-6980.0,-9598.1,-9598.1,-9598.1,-9598.1,-10083.2,-12439.6,-14607.0,-15873.1,-16673.9,-17385.5,-17870.2,-9944.8,-9777.4,-6717.6,-7475.5,-7699.6,-6779.9,-6650.4,-6941.7,-7357.8,-7321.9,-7647.2,-7692.3,-7731.1,-7317.2,-7896.2,-8015.7,-8222.7,-8267.4,-7092.2,-7280.2,-7987.1,-8667.9,-8485.1,-9642.3,-10083.2,-9465.7,-9594.5,-9667.1,-9382.6,-9644.5,-1914.6,7939.6,7922.2,7846.6,7710.3,7525.5,7038.8,6597.1,7873.5,7736.3,7601.4,7549.1,7357.4,7160.3,7559.8,7866.2,7795.1,7410.9,7155.5,6722.2,6589.1,6250.6,6183.7,5691.2,5207.8,4820.6,4568.3,4301.7,-4634.8,-4663.7,-3668.8,-2220.9,-2143.5,-2255.6,-2613.1,-3132.4,-3183.2,-3298.9,-3364.0,-3383.2,-3491.3,-3541.1,-3610.8,-3754.3,-3890.4,-3955.9,-4158.6,-4201.9,-4286.2,-4562.4,-4733.6,-5048.3,-5152.2,-5256.3,-4901.2,-4955.1,-5185.2,-5478.5,-5630.8,-6071.6,-6147.7,-6193.0,-6134.7,-6121.9,-6210.2,-6381.8,-6495.9],"S-O":[0.0,-51.0,-51.0,-51.0,-51.0,-51.0,-84.5,-390.4,-537.5,-537.5,-537.5,-537.5,-600.4,-766.4,-2032.6,-2115.9,-3146.9,-4020.6,-4020.6,-4020.6,-4020.6,-3955.9,-4075.0,-4075.0,-4075.0,-4075.0,-4075.0,-4560.1,-6916.5,-9083.9,-9096.7,-9122.6,-9087.9,-9623.2,-10138.1,-10229.7,-7169.8,-7927.8,-8151.8,-7232.1,-7102.7,-7394.0,-7810.1,-7774.2,-8099.4,-8099.4,-8099.4,-8099.4,-8678.4,-8797.9,-9004.9,-9000.0,-9005.1,-9019.4,-9022.8,-9703.5,-9520.8,-10678.0,-10696.0,-10654.9,-10783.6,-10856.2,-10571.7,-10833.7,-3103.8,6750.5,6733.0,6657.4,6521.1,6521.1,6512.2,6481.9,6244.3,6355.9,6200.5,6148.2,5956.5,5759.4,6158.8,6465.3,6450.8,6415.4,6436.0,6330.9,6213.8,6213.8,6206.7,6206.7,6186.4,6171.6,6140.6,5989.0,2964.7,2825.1,2413.9,2413.9,2413.9,2413.9,2413.9,2413.9,2363.0,2247.3,2182.3,2163.0,2055.0,2055.0,2055.0,2055.0,2055.0,2055.0,1910.2,1860.1,1783.7,1583.1,1546.4,1540.0,1534.9,1534.9,1529.6,1507.8,1450.3,1413.6,1425.2,1425.2,1425.2,1427.1,1409.3,1401.7,1388.4,1377.9,1363.3]},"daily":{"L-G":[-532.1,-327.4,972.6,738.5,-216.1,-386.7,-417.0,-466.3,-295.0,-176.0,-180.1,-567.0,78.4,46.2,519.5,-139.7,-108.2,-189.2,-371.3,-585.3,-142.2,-2.9,8.1,0.0,-15.1,0.0,-1.3,-147.5,-149.6,-146.2,-187.7,-138.5,-194.7,-263.4,1183.5,-82.2,487.5,-318.6,-227.8,3897.0,-25.7,-393.5,-728.3,321.4,-648.7,-886.1,-596.2,2639.6,-940.6,-957.3,-812.9,-999.0,4920.1,-535.6,-589.2,-615.6,210.4,-719.5,-769.1,-162.3,-526.3,-732.5,-403.4,-632.3,1090.4,1220.0,-888.6,-844.4,-694.7,-727.4,-410.7,-549.5,527.5,-790.2,1327.6,-764.3,-658.1,-151.7,-305.3,-210.5,-714.8,-669.7,570.9,-468.3,-605.9,-804.9,-790.2,-838.2,-432.6,-651.6,-458.2,-644.1,-594.8,163.2,215.5,3212.7,3543.0,-761.3,-918.7,17.7,-881.0,-998.8,-780.6,-738.1,-830.8,-873.1,-887.4,-834.6,-773.3,-887.3,-899.9,-492.5,-694.5,-531.0,-798.9,-3.9,-8.3,-22.0,-33.1,276.5,-6.2,272.2,257.4,16.5,-55.6,78.1,1.7,-55.9,-2.6,-7.1,237.4],"L-O":[-532.1,-327.4,972.6,738.5,-216.1,-386.7,-105.4,-108.8,-106.5,223.7,13.2,-54.6,-732.6,-443.1,-330.3,-194.4,-159.3,-155.3,0.0,-23.9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-806.8,-467.7,115.0,445.0,-128.1,884.0,-65.8,-454.0,-403.5,2384.8,-991.2,-1171.4,17624.3,2722.6,-1209.4,-728.3,321.4,-648.7,-271.1,-406.4,1517.2,-940.6,-957.3,-812.9,-22.6,-558.3,-493.6,1031.8,-615.6,210.4,-719.5,-363.4,-834.6,0.0,0.0,0.0,523.9,-18.6,-200.5,-888.6,-844.4,-694.7,4.6,123.2,-77.5,-815.4,1455.4,-159.7,-764.3,-658.1,-151.7,-305.3,-210.5,0.0,0.0,0.0,0.0,0.0,1011.4,-573.1,645.8,-211.5,454.7,-337.7,45.4,374.9,-540.1,-233.4,-9.2,2.9,21.1,0.0,-5.4,-881.0,-998.8,-780.6,-738.1,-830.8,0.0,0.0,0.0,0.0,0.0,-122.0,-864.5,-209.0,-517.8,437.6,-9.2,-14.5,-77.9,-89.9,0.0,0.0,5.9,998.6,771.1,-795.1,-608.6,-544.2,-500.5,-2.6,-7.1,237.4],"S-G":[0.0,-51.0,0.0,-306.1,0.0,0.0,-33.5,-305.8,-147.1,-67.9,-82.1,-449.0,0.0,0.0,0.0,-83.3,-1031.0,-873.7,-121.8,-76.7,-991.6,-1667.6,-691.8,-2618.1,0.0,0.0,0.0,-485.2,-2356.4,-2167.4,-1266.0,-800.8,-711.6,-484.7,7925.4,167.4,3059.8,-757.9,-224.1,919.7,129.4,-291.3,-416.1,35.9,-325.3,-45.1,-38.9,413.9,-579.0,-119.5,-207.0,-44.8,1175.3,-188.0,-707.0,-680.7,182.8,-1157.2,-440.9,617.5,-128.8,-72.6,284.5,-261.9,7729.8,9854.3,-17.5,-75.5,-136.4,-184.7,-486.7,-441.7,1276.4,-137.2,-134.8,-52.3,-191.8,-197.1,399.5,306.4,-71.0,-384.3,-255.3,-433.4,-133.1,-338.5,-66.9,-492.5,-483.4,-387.3,-252.3,-266.6,-8936.5,-28.9,994.9,1447.9,77.4,-112.0,-357.5,-519.3,-50.9,-115.7,-65.0,-19.3,-108.0,-49.8,-69.7,-143.5,-136.1,-65.5,-202.7,-43.2,-84.4,-276.2,-171.2,-314.7,-103.9,-104.1,355.1,-53.9,-230.1,-293.3,-152.3,-440.8,-76.1,-45.3,58.3,12.8,-88.3,-171.6,-114.1],"S-O":[0.0,-51.0,0.0,0.0,0.0,0.0,-33.5,-305.8,-147.1,0.0,0.0,0.0,-62.9,-166.1,-1266.1,-83.3,-1031.0,-873.7,0.0,0.0,0.0,64.7,-119.1,0.0,0.0,0.0,0.0,-485.2,-2356.4,-2167.4,-12.8,-25.8,34.6,-535.3,-514.9,-91.5,3059.8,-757.9,-224.1,919.7,129.4,-291.3,-416.1,35.9,-325.3,0.0,0.0,0.0,-579.0,-119.5,-207.0,4.9,-5.1,-14.3,-3.4,-680.7,182.8,-1157.2,-17.9,41.1,-128.8,-72.6,284.5,-261.9,7729.8,9854.3,-17.5,-75.5,-136.4,0.0,-8.9,-30.3,-237.6,111.5,-155.4,-52.3,-191.8,-197.1,399.5,306.4,-14.4,-35.5,20.7,-105.2,-117.1,0.0,-7.1,0.0,-20.3,-14.8,-31.0,-151.7,-3024.3,-139.6,-411.2,0.0,0.0,0.0,0.0,0.0,-50.9,-115.7,-65.0,-19.3,-108.0,0.0,0.0,0.0,0.0,0.0,-144.8,-50.1,-76.4,-200.6,-36.7,-6.4,-5.1,0.0,-5.2,-21.9,-57.5,-36.7,11.6,0.0,0.0,1.8,-17.7,-7.6,-13.3,-10.5,-14.6]},"spx":[6977.3,6926.6,6944.5,6796.9,6875.6,6915.6,6978.6,6978.0,6939.0,6976.4,6882.7,6932.3,6964.8,6941.5,6832.8,6843.2,6861.9,6909.5,6890.1,6946.1,6878.9,6816.6,6869.5,6740.0,6796.0,6775.8,6632.2,6699.4,6624.7,6606.5,6581.0,6591.9,6477.2,6343.7,6528.5,6582.7,6616.9,6782.8,6816.9,6886.2,7022.9,7126.1,7109.1,7137.9,7108.4,7173.9,7135.9,7209.0,7200.8,7259.2,7337.1,7412.8,7401.0,7501.2,7408.5,7353.6,7445.7,7473.5,7520.4,7563.6,7600.0,7553.7,7584.3,7405.7,7386.6,7394.3,7554.3,7511.4,7500.6,7472.8,7358.2,7354.0,7440.4,7483.2,7483.2,7537.4,7503.9,7482.7,7543.6,7575.4,7515.3,7543.6,7572.4,7533.8,7457.7,7443.3,7509.2,7499.0,7408.3,7412.0,7413.2,7428.8,7316.1,7437.6,7489.7,7600.5,7736.5,7723.6,7710.0,7757.6,7753.1,7728.2,7748.5,7799.0,7785.8,7745.1,7691.8,7708.0,7641.2,7674.4,7652.9,7677.3,7675.7,7731.0,7711.8,7686.1,7631.5,7666.6,7747.7,7673.5,7591.7,7657.0,7620.0,7551.8,7637.8,7764.6,7704.1,7743.4,7683.7,7670.8,7651.5],"cells":[{"curve":"L","side":"put","band":"near","contracts":14795,"raw":1.386,"same":-0.01,"t":-1.52,"ref":-1.399,"mean":-0.013},{"curve":"L","side":"put","band":"mid","contracts":22705,"raw":1.237,"same":-0.015,"t":-0.49,"ref":-1.705,"mean":-0.468},{"curve":"L","side":"put","band":"far","contracts":21269,"raw":0.327,"same":-0.012,"t":-0.51,"ref":-1.044,"mean":-0.717},{"curve":"L","side":"call","band":"near","contracts":19612,"raw":-1.453,"same":0.015,"t":1.55,"ref":0.672,"mean":-0.781},{"curve":"L","side":"call","band":"mid","contracts":49744,"raw":-0.843,"same":0.007,"t":-0.06,"ref":0.634,"mean":-0.209},{"curve":"L","side":"call","band":"far","contracts":33822,"raw":-0.139,"same":0.027,"t":0.97,"ref":0.014,"mean":-0.125},{"curve":"S","side":"put","band":"near","contracts":275,"raw":-1.595,"same":0.119,"t":0.41,"ref":-1.399,"mean":-2.994},{"curve":"S","side":"put","band":"mid","contracts":10609,"raw":-0.426,"same":-0.101,"t":1.25,"ref":-1.705,"mean":-2.131},{"curve":"S","side":"put","band":"far","contracts":21359,"raw":-0.499,"same":-0.293,"t":-3.67,"ref":-1.044,"mean":-1.543},{"curve":"S","side":"call","band":"near","contracts":1470,"raw":-1.516,"same":0.264,"t":1.63,"ref":0.672,"mean":-0.844},{"curve":"S","side":"call","band":"mid","contracts":20022,"raw":0.624,"same":0.097,"t":0.89,"ref":0.634,"mean":1.257},{"curve":"S","side":"call","band":"far","contracts":13555,"raw":-0.402,"same":0.003,"t":-0.1,"ref":0.014,"mean":-0.388}],"byy":[{"curve":"L","y":0.0,"n":161947,"pc":-0.346,"weak":0.0},{"curve":"L","y":0.05,"n":9729,"pc":-0.203,"weak":0.0},{"curve":"L","y":0.1,"n":768,"pc":-0.296,"weak":0.0},{"curve":"L","y":0.2,"n":39,"pc":4.064,"weak":0.0},{"curve":"L","y":0.5,"n":11,"pc":8.315,"weak":0.0},{"curve":"S","y":0.0,"n":67290,"pc":-0.56,"weak":0.665},{"curve":"S","y":0.05,"n":7505,"pc":-2.13,"weak":0.82},{"curve":"S","y":0.1,"n":2995,"pc":-2.177,"weak":0.866},{"curve":"S","y":0.2,"n":554,"pc":-2.09,"weak":0.93},{"curve":"S","y":0.5,"n":12,"pc":-4.592,"weak":1.0}],"above":[{"curve":"L","side":"put","band":"near","share":0.676},{"curve":"L","side":"put","band":"mid","share":0.645},{"curve":"L","side":"put","band":"far","share":0.608},{"curve":"L","side":"call","band":"near","share":0.738},{"curve":"L","side":"call","band":"mid","share":0.806},{"curve":"L","side":"call","band":"far","share":0.631},{"curve":"S","side":"put","band":"near","share":0.237},{"curve":"S","side":"put","band":"mid","share":0.566},{"curve":"S","side":"put","band":"far","share":0.443},{"curve":"S","side":"call","band":"near","share":0.363},{"curve":"S","side":"call","band":"mid","share":0.692},{"curve":"S","side":"call","band":"far","share":0.227}],"prof":[{"curve":"L","side":"put","band":"near","rows":"signal","ask":5.23,"after14":0.447},{"curve":"L","side":"put","band":"near","rows":"all","ask":9.69,"after14":0.166},{"curve":"L","side":"put","band":"mid","rows":"signal","ask":2.59,"after14":0.464},{"curve":"L","side":"put","band":"mid","rows":"all","ask":4.55,"after14":0.168},{"curve":"L","side":"put","band":"far","rows":"signal","ask":1.11,"after14":0.379},{"curve":"L","side":"put","band":"far","rows":"all","ask":1.46,"after14":0.163},{"curve":"L","side":"call","band":"near","rows":"signal","ask":5.02,"after14":0.402},{"curve":"L","side":"call","band":"near","rows":"all","ask":9.08,"after14":0.168},{"curve":"L","side":"call","band":"mid","rows":"signal","ask":2.01,"after14":0.317},{"curve":"L","side":"call","band":"mid","rows":"all","ask":3.18,"after14":0.167},{"curve":"L","side":"call","band":"far","rows":"signal","ask":0.61,"after14":0.298},{"curve":"L","side":"call","band":"far","rows":"all","ask":0.6,"after14":0.153},{"curve":"S","side":"put","band":"near","rows":"signal","ask":8.91,"after14":0.182},{"curve":"S","side":"put","band":"near","rows":"all","ask":9.84,"after14":0.15},{"curve":"S","side":"put","band":"mid","rows":"signal","ask":4.13,"after14":0.099},{"curve":"S","side":"put","band":"mid","rows":"all","ask":4.62,"after14":0.151},{"curve":"S","side":"put","band":"far","rows":"signal","ask":2.16,"after14":0.06},{"curve":"S","side":"put","band":"far","rows":"all","ask":1.47,"after14":0.151},{"curve":"S","side":"call","band":"near","rows":"signal","ask":8.86,"after14":0.061},{"curve":"S","side":"call","band":"near","rows":"all","ask":9.23,"after14":0.151},{"curve":"S","side":"call","band":"mid","rows":"signal","ask":3.46,"after14":0.069},{"curve":"S","side":"call","band":"mid","rows":"all","ask":3.23,"after14":0.151},{"curve":"S","side":"call","band":"far","rows":"signal","ask":0.63,"after14":0.097},{"curve":"S","side":"call","band":"far","rows":"all","ask":0.59,"after14":0.15}]};
+const ST = {"times":["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","all 12"],"payback":[0.934,0.927,0.967,0.977,0.981,0.942,0.97,0.877,0.913,0.939,1.042,0.935,0.949],"cost":[31.33,28.36,25.8,24.08,22.32,21.04,19.27,17.58,15.57,13.43,11.63,9.06,19.96],"buy":[-2.378,-2.241,-1.027,-0.738,-0.597,-1.389,-0.735,-2.33,-1.6,-0.974,0.332,-0.734,-1.201],"sell":[1.777,1.872,0.681,0.385,0.265,1.062,0.404,1.99,1.11,0.671,-0.655,0.444,0.834],"tbuy":[-1.22,-1.23,-0.55,-0.45,-0.37,-0.96,-0.55,-2.07,-1.46,-1.01,0.27,-1.09,-1.2],"tsell":[0.91,1.03,0.37,0.24,0.16,0.74,0.3,1.77,1.0,0.7,-0.54,0.66,0.83],"cum":{"BUY-G":[-5.2,2.2,18.4,171.1,249.1,135.9,77.1,-142.7,-352.3,-363.7,-387.4,-373.8,-387.5,-397.8,-412.0,-414.3,-411.8,-414.7,-423.6,-429.2,-415.7,-425.8,-425.1,-418.7,-348.6,-355.1,-353.3,-359.0,-358.6,-358.6,-340.3,-353.8,-347.6,-358.2,-360.4,-362.2,-327.2,-317.3,-324.9,-303.7,-311.6,-317.1,-321.1,-311.5,-317.2,-321.7,-330.4,-337.9,-346.9,-347.7,-358.1,-367.4,-357.2,-363.4,-349.5,-353.8,-349.5,-344.7,-349.5,-353.3,-351.1,-342.6,-344.8,-338.7,-355.9,-352.2,-356.2,-347.2,-352.2,-357.6,-362.4,-371.5,-377.1,-375.8,-362.2,-362.9,-373.6,-383.9,-388.0,-389.5,-396.1,-397.7,-395.8,-405.0,-407.3,-408.9,-415.8,-412.2,-412.6,-424.7,-438.1,-437.0,-330.0,-332.7,-341.4,-347.6,-352.1,-345.9,-351.0,-342.8,-348.1,-354.0,-355.3,-361.9,-367.7,-364.1,-363.7,-365.0,-366.5,-369.3,-369.6,-373.9,-373.0,-367.1,-371.8,-370.8,-375.1,-381.8,-381.9,-380.0,-388.9,-388.1,-380.8,-412.0,-416.4,-418.2,-424.6,-425.2,-420.6,-422.2,-389.9],"BUY-O":[-5.2,2.2,18.4,171.1,249.1,135.9,77.1,-142.7,-352.3,-352.3,-352.3,-352.3,-349.9,-351.1,-330.1,-321.5,-357.6,-354.4,-354.4,-354.4,-354.4,-354.4,-354.4,-354.4,-354.4,-354.4,-354.4,-549.0,-392.1,-460.9,-460.7,-468.7,-475.7,-458.1,-379.3,-420.3,-226.9,-335.3,-438.1,-416.9,-424.8,-430.4,-553.7,-570.8,-594.8,-601.0,-612.4,-586.8,-597.8,-608.3,-620.9,-630.6,-613.9,-629.9,-640.7,-627.8,-637.8,-637.6,-648.9,-659.7,-659.7,-659.7,-659.7,-672.5,-664.1,-674.7,-755.4,-655.9,-800.4,-819.9,-790.2,-812.9,-808.7,-794.1,-813.9,-881.5,-970.8,-1020.2,-1035.5,-1036.9,-1020.2,-1027.8,-1034.2,-1022.3,-1027.5,-1005.8,-1014.2,-1007.8,-1033.5,-1010.2,-1033.2,-1047.1,-1058.4,-1054.3,-1054.3,-1060.5,-1065.0,-1058.8,-1063.9,-1055.7,-1069.6,-1058.3,-1083.7,-1103.4,-1105.0,-1105.0,-1105.0,-1105.0,-1105.0,-1105.0,-1183.5,-1243.7,-1324.9,-1367.3,-1405.0,-1412.8,-1419.2,-1422.3,-1425.7,-1438.7,-1454.8,-1464.2,-1457.9,-1446.9,-1451.0,-1453.9,-1468.3,-1475.7,-1494.2,-1509.1,-1467.0],"SELL-G":[-0.3,10.2,9.6,-21.6,-16.8,3.9,17.6,29.3,63.4,126.3,248.2,119.0,177.7,296.7,87.9,195.1,359.3,435.6,525.9,549.5,610.4,577.9,712.7,931.3,203.8,417.7,476.9,666.4,501.1,564.8,592.0,793.4,555.9,518.1,162.2,230.6,32.4,136.6,235.7,-145.4,-249.7,-119.5,-112.4,-118.6,-124.5,-51.5,131.4,-30.4,55.0,143.1,158.7,218.0,6.3,113.5,133.6,219.9,199.5,268.4,410.9,468.5,455.5,424.0,434.6,415.0,234.1,-197.9,-121.1,-224.6,-84.1,36.1,-58.3,96.7,63.3,17.3,-49.4,12.6,98.1,143.8,155.9,154.0,120.5,246.6,261.5,258.0,289.6,169.8,262.2,254.9,439.2,421.5,564.0,623.7,404.0,360.7,319.2,290.7,195.7,175.3,285.0,360.5,452.4,443.5,574.0,631.6,710.9,574.3,607.4,627.0,448.3,536.5,611.6,668.4,746.6,785.6,818.1,867.9,914.9,1012.9,1023.5,1003.9,1113.8,1138.5,1137.8,1011.2,1102.7,1205.1,1265.7,1322.6,1351.7,1473.2,1028.6],"SELL-O":[-0.3,10.2,9.6,3.0,7.5,25.6,25.4,37.5,57.0,119.9,241.8,112.6,171.3,290.3,81.5,107.1,134.8,136.3,226.6,250.3,311.2,278.7,413.5,632.1,-95.4,118.5,177.7,188.0,185.1,196.1,223.3,424.7,187.2,161.7,88.0,106.8,92.0,103.1,111.6,83.8,71.8,76.5,76.5,76.5,76.5,149.6,332.5,170.7,256.1,344.2,359.7,419.1,207.3,314.6,334.7,356.2,365.6,383.1,525.5,583.2,570.1,538.6,549.3,547.9,518.4,493.3,499.5,494.4,493.1,613.4,518.9,674.0,640.6,594.6,527.8,536.1,546.4,540.4,535.7,524.1,490.6,616.7,631.6,628.1,659.8,539.9,632.4,625.1,809.4,791.6,934.1,993.9,774.2,730.9,689.3,691.0,689.7,695.5,711.0,713.7,715.0,712.9,724.0,717.8,730.6,594.0,627.2,646.7,468.0,556.2,563.0,563.5,571.5,581.0,592.6,642.5,689.5,787.4,798.0,778.5,888.4,913.0,912.4,785.7,877.2,878.8,884.8,885.0,914.0,1035.5,591.0]},"dates":["2026-01-12","2026-01-14","2026-01-15","2026-01-20","2026-01-21","2026-01-23","2026-01-27","2026-01-28","2026-01-30","2026-02-02","2026-02-04","2026-02-06","2026-02-09","2026-02-11","2026-02-12","2026-02-17","2026-02-19","2026-02-20","2026-02-24","2026-02-25","2026-02-27","2026-03-03","2026-03-04","2026-03-06","2026-03-09","2026-03-11","2026-03-13","2026-03-16","2026-03-18","2026-03-19","2026-03-23","2026-03-25","2026-03-26","2026-03-30","2026-03-31","2026-04-02","2026-04-07","2026-04-08","2026-04-10","2026-04-13","2026-04-15","2026-04-17","2026-04-20","2026-04-22","2026-04-23","2026-04-27","2026-04-29","2026-04-30","2026-05-04","2026-05-05","2026-05-07","2026-05-11","2026-05-12","2026-05-14","2026-05-15","2026-05-19","2026-05-21","2026-05-22","2026-05-27","2026-05-28","2026-06-01","2026-06-03","2026-06-04","2026-06-08","2026-06-09","2026-06-11","2026-06-15","2026-06-16","2026-06-18","2026-06-22","2026-06-24","2026-06-26","2026-06-29","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-08","2026-09-10","2026-09-11","2026-09-14","2026-09-16","2026-09-17","2026-09-22","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30"]};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function txt(parent, x, y, s, attrs) { const t = el('text', Object.assign({ x, y }, attrs || {}), parent); t.textContent = s; return t; }
+const fmt = (v, d = 0) => (v < 0 ? '−' : (v > 0 ? '+' : '')) + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dlabel = s => { const [y, m, d] = s.split('-'); return `${+d} ${MON[+m - 1]}`; };
+function niceTicks(lo, hi, n) { const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))); const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(s => s >= step0); const a = Math.floor(lo / step) * step, out = []; for (let v = a; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6)); return out; }
+function tipFor(box) { let t = box.querySelector('.tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; box.appendChild(t); } return t; }
+function setTip(t, rows, head) {
+  t.replaceChildren();
+  const h = document.createElement('div'); h.className = 's'; h.textContent = head; t.appendChild(h);
+  rows.forEach(r => { const row = document.createElement('div'); row.className = 'row'; const l = document.createElement('span'); const k = document.createElement('span'); k.className = 'key'; k.style.background = r.color; l.appendChild(k); l.appendChild(document.createTextNode(r.name)); const v = document.createElement('span'); v.className = 'v'; v.textContent = r.value; row.appendChild(l); row.appendChild(v); t.appendChild(row); });
+}
+
+/* Cumulative profit: two panels (extending, rolling) and an SPX strip, one shared x scale. */
+function drawCum() {
+  const box = document.getElementById('cum'); box.querySelectorAll('svg').forEach(s => s.remove());
+  const W = Math.max(300, box.clientWidth), narrow = W < 520;
+  const ml = narrow ? 52 : 62, mr = narrow ? 12 : 70, ph = narrow ? 150 : 170, sh = 70, gap = 34, top = 22;
+  const H = top + ph + gap + ph + gap + sh + 26;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }); box.prepend(svg);
+  const n = D.dates.length, x = i => ml + (W - ml - mr) * i / (n - 1);
+  const panels = [{ key: 'G', title: 'Extending window', y0: top }, { key: 'O', title: 'Rolling one-week window', y0: top + ph + gap }];
+  const all = [].concat(D.cum['L-G'], D.cum['S-G'], D.cum['L-O'], D.cum['S-O']);
+  const lo = Math.min(0, ...all), hi = Math.max(0, ...all), ticks = niceTicks(lo, hi, 4);
+  const ylo = Math.min(lo, ticks[0]), yhi = Math.max(hi, ticks[ticks.length - 1]);
+  const monthIdx = []; D.dates.forEach((d, i) => { if (i === 0 || d.slice(5, 7) !== D.dates[i - 1].slice(5, 7)) monthIdx.push(i); });
+  panels.forEach(p => {
+    const y = v => p.y0 + ph * (yhi - v) / (yhi - ylo);
+    txt(svg, ml, p.y0 - 8, p.title, { class: 'title' });
+    ticks.forEach(t => { el('line', { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1 }, svg); txt(svg, ml - 6, y(t) + 4, t.toLocaleString('en-US').replace('-', '−'), { 'text-anchor': 'end' }); });
+    [['L', '--line', 'Line'], ['S', '--svi', 'SVI']].forEach(([c, col, name]) => {
+      const s = D.cum[`${c}-${p.key}`];
+      el('path', { class: 'series', d: s.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(''), fill: 'none', stroke: css(col), 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+      el('circle', { cx: x(n - 1), cy: y(s[n - 1]), r: 4, fill: css(col), stroke: css('--surface'), 'stroke-width': 2 }, svg);
+      if (!narrow) txt(svg, x(n - 1) + 8, y(s[n - 1]) + 4, `${name} ${fmt(s[n - 1])}`, { class: 'lab' });
+    });
+  });
+  const s0 = top + 2 * (ph + gap), sp = D.spx, slo = Math.min(...sp), shi = Math.max(...sp), sy = v => s0 + sh * (shi - v) / (shi - slo);
+  txt(svg, ml, s0 - 8, 'SPX official close', { class: 'title' });
+  [slo, shi].forEach(v => txt(svg, ml - 6, sy(v) + 4, Math.round(v).toLocaleString('en-US'), { 'text-anchor': 'end' }));
+  el('line', { x1: ml, x2: W - mr, y1: s0 + sh, y2: s0 + sh, stroke: css('--grid'), 'stroke-width': 1 }, svg);
+  el('path', { d: sp.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${sy(v).toFixed(1)}`).join(''), fill: 'none', stroke: css('--spx'), 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, svg);
+  monthIdx.forEach(i => { if (narrow && (D.dates[i].slice(5, 7) % 2 === 0)) return; txt(svg, x(i), H - 6, MON[+D.dates[i].slice(5, 7) - 1], { 'text-anchor': 'start' }); });
+  const cross = el('line', { y1: top, y2: s0 + sh, stroke: css('--axis'), 'stroke-width': 1, visibility: 'hidden' }, svg);
+  const hit = el('rect', { x: ml, y: top, width: W - ml - mr, height: s0 + sh - top, fill: 'transparent', tabindex: 0, class: 'hit', 'aria-label': 'Move across the chart to read each day' }, svg);
+  const tip = tipFor(box);
+  let cur = n - 1;
+  function show(i) {
+    cur = i; cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+    setTip(tip, [
+      { name: 'Line, extending', value: fmt(D.cum['L-G'][i]), color: css('--line') }, { name: 'SVI, extending', value: fmt(D.cum['S-G'][i]), color: css('--svi') },
+      { name: 'Line, rolling', value: fmt(D.cum['L-O'][i]), color: css('--line') }, { name: 'SVI, rolling', value: fmt(D.cum['S-O'][i]), color: css('--svi') },
+      { name: 'SPX close', value: D.spx[i].toLocaleString('en-US'), color: css('--spx') }], `${dlabel(D.dates[i])} · cumulative points`);
+    tip.hidden = false; const tx = x(i) + 12, tw = tip.offsetWidth; tip.style.left = (tx + tw > W ? x(i) - tw - 12 : tx) + 'px'; tip.style.top = (top + 10) + 'px';
+  }
+  function hide() { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); }
+  hit.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * W / r.width; show(Math.max(0, Math.min(n - 1, Math.round((px - ml) / (W - ml - mr) * (n - 1))))); });
+  hit.addEventListener('pointerleave', hide); hit.addEventListener('blur', hide);
+  hit.addEventListener('focus', () => show(cur));
+  hit.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { show(Math.min(n - 1, cur + 1)); e.preventDefault(); } if (e.key === 'ArrowLeft') { show(Math.max(0, cur - 1)); e.preventDefault(); } });
+}
+
+/* Grouped bars: per side and band, raw (minus reference) and same-minute edge. */
+function drawEdge(id, curve, col, title) {
+  const box = document.getElementById(id); box.querySelectorAll('svg').forEach(s => s.remove());
+  const W = Math.max(280, box.clientWidth), H = 250, ml = 44, mr = 8, top = 26, bot = 44;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }); box.prepend(svg);
+  const cells = D.cells.filter(c => c.curve === curve);
+  const vals = [].concat(cells.map(c => c.raw), cells.map(c => c.same), [0]);
+  const lo = Math.min(...vals), hi = Math.max(...vals), ticks = niceTicks(Math.min(lo, -0.5), Math.max(hi, 0.5), 4);
+  const ylo = ticks[0], yhi = ticks[ticks.length - 1], y = v => top + (H - top - bot) * (yhi - v) / (yhi - ylo);
+  txt(svg, ml, 14, title, { class: 'title' });
+  ticks.forEach(t => { el('line', { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1 }, svg); txt(svg, ml - 6, y(t) + 4, String(t).replace('-', '−'), { 'text-anchor': 'end' }); });
+  const band = (W - ml - mr) / cells.length, bw = Math.min(16, band / 3.2);
+  const tip = tipFor(box);
+  cells.forEach((c, i) => {
+    const cx = ml + band * (i + 0.5);
+    [[c.raw, css('--ref'), -1], [c.same, css(col), 1]].forEach(([v, color, s]) => {
+      const x0 = s < 0 ? cx - bw - 1 : cx + 1, y0 = y(Math.max(0, v)), h = Math.max(1, Math.abs(y(v) - y(0)));
+      const r = Math.min(3, h / 2), up = v >= 0;
+      const d = up ? `M${x0},${y(0)}V${y0 + r}Q${x0},${y0} ${x0 + r},${y0}H${x0 + bw - r}Q${x0 + bw},${y0} ${x0 + bw},${y0 + r}V${y(0)}Z`
+                   : `M${x0},${y(0)}V${y(v) - r}Q${x0},${y(v)} ${x0 + r},${y(v)}H${x0 + bw - r}Q${x0 + bw},${y(v)} ${x0 + bw},${y(v) - r}V${y(0)}Z`;
+      el('path', { d, fill: color }, svg);
+    });
+    txt(svg, cx, H - bot + 16, c.band, { 'text-anchor': 'middle' });
+    if (i % 3 === 1) txt(svg, cx, H - bot + 32, c.side === 'put' ? 'puts' : 'calls', { 'text-anchor': 'middle', class: 'lab' });
+    const hit = el('rect', { x: cx - band / 2, y: top, width: band, height: H - top - bot, fill: 'transparent', tabindex: 0, class: 'hit', 'aria-label': `${c.side} ${c.band}` }, svg);
+    const show = () => { setTip(tip, [{ name: 'vs reference', value: fmt(c.raw, 3), color: css('--ref') }, { name: 'vs same minute', value: fmt(c.same, 3), color: css(col) }, { name: 'same-minute day t', value: c.t.toFixed(2), color: 'transparent' }, { name: 'contracts', value: c.contracts.toLocaleString('en-US'), color: 'transparent' }], `${c.side} · ${c.band} · y = 0`); tip.hidden = false; const tw = tip.offsetWidth; tip.style.left = Math.max(0, Math.min(W - tw, cx - tw / 2)) + 'px'; tip.style.top = (top + 4) + 'px'; };
+    hit.addEventListener('pointerenter', show); hit.addEventListener('focus', show);
+    hit.addEventListener('pointerleave', () => tip.hidden = true); hit.addEventListener('blur', () => tip.hidden = true);
+  });
+  el('line', { x1: ml + band * 3, x2: ml + band * 3, y1: top, y2: H - bot, stroke: css('--grid'), 'stroke-width': 1 }, svg);
+}
+
+function fillByy() {
+  const tb = document.getElementById('byy'); tb.replaceChildren();
+  [0, 0.05, 0.1, 0.2, 0.5].forEach(yv => {
+    const L = D.byy.find(r => r.curve === 'L' && Math.abs(r.y - yv) < 1e-9), S = D.byy.find(r => r.curve === 'S' && Math.abs(r.y - yv) < 1e-9);
+    const tr = document.createElement('tr');
+    [yv.toFixed(2), L.n.toLocaleString('en-US'), fmt(L.pc, 2), S.n.toLocaleString('en-US'), fmt(S.pc, 2), Math.round(S.weak * 100) + '%'].forEach((v, j) => { const td = document.createElement('td'); td.className = 'n'; if (j === 0) td.style.textAlign = 'left'; td.textContent = v; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+}
+
+
+/* Straddle payback by entry time: diverging columns around break-even (payout = mid price). */
+function drawPayback() {
+  const box = document.getElementById('payback'); box.querySelectorAll('svg').forEach(s => s.remove());
+  const W = Math.max(300, box.clientWidth), H = 230, ml = 44, mr = 8, top = 30, bot = 30;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }); box.prepend(svg);
+  const v = ST.payback.map(p => (p - 1) * 100), ticks = [-15, -10, -5, 0, 5];
+  const y = t => top + (H - top - bot) * (5 - t) / 20;
+  txt(svg, ml, 14, 'Payout minus mid price (cents per dollar)', { class: 'title' });
+  ticks.forEach(t => { el('line', { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1 }, svg); txt(svg, ml - 6, y(t) + 4, String(t).replace('-', '−'), { 'text-anchor': 'end' }); });
+  const n = ST.times.length - 1, band = (W - ml - mr) / n, bw = Math.min(22, band * 0.6), tip = tipFor(box);
+  for (let i = 0; i < n; i++) {
+    const cx = ml + band * (i + 0.5), val = v[i], x0 = cx - bw / 2, y0 = y(0), y1 = y(val), r = Math.min(3, Math.abs(y1 - y0) / 2);
+    const d = val >= 0 ? `M${x0},${y0}V${y1 + r}Q${x0},${y1} ${x0 + r},${y1}H${x0 + bw - r}Q${x0 + bw},${y1} ${x0 + bw},${y1 + r}V${y0}Z`
+                       : `M${x0},${y0}V${y1 - r}Q${x0},${y1} ${x0 + r},${y1}H${x0 + bw - r}Q${x0 + bw},${y1} ${x0 + bw},${y1 - r}V${y0}Z`;
+    el('path', { d, fill: css('--accent') }, svg);
+    if (W >= 520 || i % 2 === 0) txt(svg, cx, H - 10, ST.times[i], { 'text-anchor': 'middle' });
+    const hit = el('rect', { x: cx - band / 2, y: top, width: band, height: H - top - bot, fill: 'transparent', tabindex: 0, class: 'hit', 'aria-label': ST.times[i] }, svg);
+    const show = () => { setTip(tip, [{ name: 'payback per dollar', value: ST.payback[i].toFixed(3), color: css('--accent') }, { name: 'mean mid price', value: ST.cost[i].toFixed(2), color: 'transparent' }, { name: 'buy, pts per straddle', value: fmt(ST.buy[i], 2), color: 'transparent' }, { name: 'sell, pts per straddle', value: fmt(ST.sell[i], 2), color: 'transparent' }], `entry ${ST.times[i]} · 135 days`); tip.hidden = false; const tw = tip.offsetWidth; tip.style.left = Math.max(0, Math.min(W - tw, cx - tw / 2)) + 'px'; tip.style.top = (top + 4) + 'px'; };
+    hit.addEventListener('pointerenter', show); hit.addEventListener('focus', show);
+    hit.addEventListener('pointerleave', () => tip.hidden = true); hit.addEventListener('blur', () => tip.hidden = true);
+  }
+}
+function drawAll() { drawCum(); drawEdge('edgeL', 'L', '--line', 'Straight line'); drawEdge('edgeS', 'S', '--svi', 'SVI'); drawPayback(); }
+fillByy(); drawAll();
+let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(drawAll, 80); }).observe(document.querySelector('.page'));
+const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+</body></html>
